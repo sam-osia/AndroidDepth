@@ -42,20 +42,21 @@ public class Camera extends CameraDevice.StateCallback {
     private Context context;
     private CameraManager cameraManager;
     private ImageReader depthReader;
+    private ImageReader rgbReader;
     private CaptureRequest.Builder previewBuilder;
     private ImageReader.OnImageAvailableListener depthAvailableListener;
 
     private HandlerThread backgroundHandlerThread;
     private Handler backgroundHandler;
 
-    public Camera(Context context, DepthFrameVisualizer depthFrameVisualizer)
+    public Camera(Context context, IDepthFrameListener IDepthFrameListener)
     {
         this.context = context;
         cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
-        depthAvailableListener = new DepthFrameAvailableListener(depthFrameVisualizer);
+        depthAvailableListener = new DepthFrameListener(IDepthFrameListener);
         depthReader = ImageReader.newInstance(
-                DepthFrameAvailableListener.WIDTH,
-                DepthFrameAvailableListener.HEIGHT,
+                DepthFrameListener.WIDTH,
+                DepthFrameListener.HEIGHT,
                 ImageFormat.DEPTH16, 30);
         depthReader.setOnImageAvailableListener(depthAvailableListener, null);
 

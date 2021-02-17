@@ -5,14 +5,12 @@ import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.ImageReader;
-import android.os.SystemClock;
-import android.util.Log;
 
 import java.nio.ShortBuffer;
 
-public class DepthFrameAvailableListener implements ImageReader.OnImageAvailableListener
+public class DepthFrameListener implements ImageReader.OnImageAvailableListener
 {
-    private static final String TAG = DepthFrameAvailableListener.class.getSimpleName();
+    private static final String TAG = DepthFrameListener.class.getSimpleName();
     public static final int WIDTH = 240;
     public static final int HEIGHT = 180;
     public static final int FRAME_COUNT_MAX = 10;
@@ -20,11 +18,11 @@ public class DepthFrameAvailableListener implements ImageReader.OnImageAvailable
     private int numFrames;
     private long prevTime;
 
-    private DepthFrameVisualizer depthFrameVisualizer;
+    private IDepthFrameListener depthFrameListener;
 
-    public DepthFrameAvailableListener(DepthFrameVisualizer depthFrameVisualizer)
+    public DepthFrameListener(IDepthFrameListener depthFrameListener)
     {
-        this.depthFrameVisualizer = depthFrameVisualizer;
+        this.depthFrameListener = depthFrameListener;
         numFrames = 0;
         prevTime = System.currentTimeMillis();
     }
@@ -35,9 +33,9 @@ public class DepthFrameAvailableListener implements ImageReader.OnImageAvailable
         if (image != null && image.getFormat() == ImageFormat.DEPTH16)
         {
             numFrames++;
-            depthFrameVisualizer.onRawDataAvailable(image);
+            depthFrameListener.onRawDepthAvailable(image);
 
-            if (depthFrameVisualizer.getProcessLive()) {
+            if (depthFrameListener.getProcessLive()) {
                 PublishRaw(image);
             }
         }
@@ -50,7 +48,7 @@ public class DepthFrameAvailableListener implements ImageReader.OnImageAvailable
             long duration = now - prevTime;
             try
             {
-                depthFrameVisualizer.onFpsAvailable((10.0 / duration) * 1000);
+                depthFrameListener.onFpsAvailable((10.0 / duration) * 1000);
                 prevTime = now;
             }catch (ArithmeticException e) { }
         }
@@ -86,19 +84,19 @@ public class DepthFrameAvailableListener implements ImageReader.OnImageAvailable
             }
         }
 
-        if (depthFrameVisualizer != null)
+        if (depthFrameListener != null)
         {
-            if (depthFrameVisualizer.getRenderDepth())
+            if (depthFrameListener.getRenderDepth())
             {
                 Bitmap depthBitmap = ConvertToRGBBitmap(depthData);
-                depthFrameVisualizer.onDepthMapAvailable(depthBitmap);
+                depthFrameListener.onDepthMapAvailable(depthBitmap);
                 depthBitmap.recycle();
             }
 
-            if (depthFrameVisualizer.getRenderConfidence())
+            if (depthFrameListener.getRenderConfidence())
             {
                 Bitmap confidenceBitmap = ConvertToRGBBitmap(confidenceData);
-                depthFrameVisualizer.onConfidenceAvailable(confidenceBitmap);
+                depthFrameListener.onConfidenceAvailable(confidenceBitmap);
                 confidenceBitmap.recycle();
             }
         }
